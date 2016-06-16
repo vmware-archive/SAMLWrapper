@@ -21,4 +21,8 @@ public class AuthRequiredPage extends BasePage {
         assertThat(find(By.className("auth-required")), hasSize(1));
     }
 
+    public String getUsernameTest() {
+        return findFirst(By.className("username-test")).getText();
+    }
+
 }

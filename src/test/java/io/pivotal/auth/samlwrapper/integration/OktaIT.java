@@ -3,6 +3,8 @@ package io.pivotal.auth.samlwrapper.integration;
 import io.pivotal.auth.samlwrapper.SamlWrapperApplication;
 import io.pivotal.auth.samlwrapper.pages.*;
 import org.fluentlenium.adapter.FluentTest;
+import org.fluentlenium.assertj.FluentLeniumAssertions;
+import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,7 +18,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.util.concurrent.TimeUnit;
 
-import static org.fluentlenium.assertj.FluentLeniumAssertions.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = SamlWrapperApplication.class)
@@ -50,7 +52,7 @@ public class OktaIT extends FluentTest {
 
 	@Override
 	public WebDriver getDefaultDriver() {
-//		return new HtmlUnitDriver(true);
+//		return new HtmlUnitDriver(true); // Something inside the Okta login process is currently failing with this driver. TODO: investigate
         return new FirefoxDriver();
 	}
 
@@ -72,64 +74,72 @@ public class OktaIT extends FluentTest {
 	@Test
 	public void testUnauthenticatedAllowedPages() throws Exception {
 		goTo(homePage);
-		assertThat(homePage).isAt();
+		FluentLeniumAssertions.assertThat(homePage).isAt();
 	}
 
 	@Test
 	public void testErrorPageUnauthenticated() throws Exception {
 		goTo(errorPage);
-		assertThat(errorPage).isAt();
+		FluentLeniumAssertions.assertThat(errorPage).isAt();
 	}
 
 	@Test
 	public void testUnauthenticatedRedirect() throws Exception {
 		goTo(authRequiredPage);
-		assertThat(authRequiredPage);
-		assertThat(oktaLoginPage).isAt();
+		FluentLeniumAssertions.assertThat(oktaLoginPage).isAt();
 	}
 
 	@Test
 	public void testLoginInFromOkta() throws Exception {
 		goTo(oktaLoginPage);
 		oktaLoginPage.performLogin(TEST_USERNAME, TEST_PASSWORD);
-		assertThat(authRequiredPage).isAt();
+		FluentLeniumAssertions.assertThat(authRequiredPage).isAt();
 	}
 
 	@Test
 	public void testLoginInFromApp() throws Exception {
 		goTo(authRequiredPage);
-		assertThat(oktaLoginPage).isAt();
+		FluentLeniumAssertions.assertThat(oktaLoginPage).isAt();
 		oktaLoginPage.performLogin(TEST_USERNAME, TEST_PASSWORD);
-		assertThat(authRequiredPage).isAt();
+		FluentLeniumAssertions.assertThat(authRequiredPage).isAt();
+	}
+
+	private void loginFromApp() {
+		goTo(authRequiredPage);
+		FluentLeniumAssertions.assertThat(oktaLoginPage).isAt();
+		oktaLoginPage.performLogin(TEST_USERNAME, TEST_PASSWORD);
+		FluentLeniumAssertions.assertThat(authRequiredPage).isAt();
 	}
 
 	@Test
 	public void testSessionPersists() throws Exception {
-		goTo(authRequiredPage);
-		assertThat(oktaLoginPage).isAt();
-		oktaLoginPage.performLogin(TEST_USERNAME, TEST_PASSWORD);
-		assertThat(authRequiredPage).isAt();
+		loginFromApp();
 		goTo(homePage);
 		goTo(OKTA_LOGOUT_URL);
 		goTo(authRequiredPage);
-		assertThat(authRequiredPage).isAt();
+		FluentLeniumAssertions.assertThat(authRequiredPage).isAt();
 	}
 
 	@Test
 	public void testLogout() throws Exception {
-		goTo(authRequiredPage);
-		assertThat(oktaLoginPage).isAt();
-		oktaLoginPage.performLogin(TEST_USERNAME, TEST_PASSWORD);
-		assertThat(authRequiredPage).isAt();
+		loginFromApp();
 		goTo(logoutPage);
 		goTo(OKTA_LOGOUT_URL);
 		goTo(authRequiredPage);
-		assertThat(oktaLoginPage).isAt();
+		FluentLeniumAssertions.assertThat(oktaLoginPage).isAt();
 	}
 
-	// NJT notes:
-	// Further tests (beyond scope? testing wrong thing?):
-	// Failed log-in directs to correct error page,
+	@Test
+	public void testRejectInvalidLogins() throws Exception {
+		goTo(homePage.getUrl()+"saml/SSO");
+		FluentLeniumAssertions.assertThat(errorPage).isAt();
+	}
+
+	@Test
+	public void testUsernameAppearsOnLogin() throws Exception {
+		loginFromApp();
+		assertThat(authRequiredPage.getUsernameTest(), Matchers.equalTo("Logged in as " + TEST_USERNAME + "."));
+	}
 
 	@After
 	public void showDebugInformation() { // TODO: temporary debugging
