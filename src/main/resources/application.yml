@@ -1,0 +1,2 @@
+saml:
+  max-auth-age-seconds: 86400

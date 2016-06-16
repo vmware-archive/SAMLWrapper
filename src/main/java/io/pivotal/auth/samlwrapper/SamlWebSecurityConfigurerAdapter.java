@@ -1,5 +1,6 @@
 package io.pivotal.auth.samlwrapper;
 
+import io.pivotal.auth.samlwrapper.config.SAMLConfiguration;
 import org.opensaml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml2.metadata.provider.MetadataProvider;
 import org.opensaml.saml2.metadata.provider.MetadataProviderException;
@@ -10,6 +11,7 @@ import org.opensaml.util.resource.ResourceException;
 import org.opensaml.xml.parse.StaticBasicParserPool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -49,6 +51,9 @@ public class SamlWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapt
     // provided explicitly to the SAMLAuthenticationProvider
     @Autowired
     private SAMLUserDetailsService samlUserDetailsService;
+
+    @Autowired
+    private SAMLConfiguration samlConfiguration;
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -109,7 +114,7 @@ public class SamlWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapt
     @Bean(name = "webSSOprofileConsumer")
     public WebSSOProfileConsumer webSSOProfileConsumer() {
         WebSSOProfileConsumerImpl webSSOProfileConsumer = new WebSSOProfileConsumerImpl();
-        webSSOProfileConsumer.setMaxAuthenticationAge(10); // TODO: make configurable
+        webSSOProfileConsumer.setMaxAuthenticationAge(samlConfiguration.getMaxAuthAgeSeconds());
         return webSSOProfileConsumer;
     }
 
