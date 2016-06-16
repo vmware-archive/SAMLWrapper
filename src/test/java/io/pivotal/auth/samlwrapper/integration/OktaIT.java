@@ -93,7 +93,7 @@ public class OktaIT extends FluentTest {
 	public void testLoginInFromOkta() throws Exception {
 		goTo(oktaLoginPage);
 		oktaLoginPage.performLogin(TEST_USERNAME, TEST_PASSWORD);
-		FluentLeniumAssertions.assertThat(authRequiredPage).isAt();
+		FluentLeniumAssertions.assertThat(homePage).isAt();
 	}
 
 	@Test

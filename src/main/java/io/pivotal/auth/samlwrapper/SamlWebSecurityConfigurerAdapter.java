@@ -11,7 +11,6 @@ import org.opensaml.util.resource.ResourceException;
 import org.opensaml.xml.parse.StaticBasicParserPool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -61,21 +60,21 @@ public class SamlWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapt
         // Disable Cross-Site-Request-Forgery checking for the SSO URLs (since they must accept data sent from the
         // Identity Provider's domains)
         http.csrf().ignoringAntMatchers(
-                "/saml/SSO", // todo: make configurable
-                "/saml/HoKSSO",
-                "/saml/SingleLogout"
+                samlConfiguration.getSsoUrl(),
+                samlConfiguration.getHokSsoUrl(),
+                samlConfiguration.getSingleLogoutUrl()
         );
 
         // ...and the URLs necessary for SSO
         http.authorizeRequests()
-                .antMatchers("/error").permitAll()
-                .antMatchers("/my-error").permitAll()
-                .antMatchers("/saml/logout").permitAll()
-                .antMatchers("/saml/SingleLogout").permitAll()
+                .antMatchers(samlConfiguration.getErrorUrl()).permitAll()
+                .antMatchers(samlConfiguration.getLogoutUrl()).permitAll()
+                .antMatchers(samlConfiguration.getSingleLogoutUrl()).permitAll()
+                .antMatchers(samlConfiguration.getSsoUrl()).permitAll()
+                .antMatchers(samlConfiguration.getHokSsoUrl()).permitAll()
                 .antMatchers("/").permitAll()
-                .antMatchers("/saml/SSO").permitAll()
-                .antMatchers("/saml/HoKSSO").permitAll()
                 .anyRequest().authenticated();
+
     }
 
     // Use our SAML configuration for security
@@ -145,13 +144,10 @@ public class SamlWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapt
     // This registers all the Identity Providers which we trust. Auto-wired by WebSSOProfile.
     @Bean
     public MetadataManager metadata() throws MetadataProviderException, ResourceException {
-        Map<String,String> identityProviders = new HashMap<>();
-        identityProviders.put("okta", "/okta.xml");
+        List<String> identityProviders = Arrays.asList(samlConfiguration.getIdentityProviderUris());
 
         List<MetadataProvider> providers = new ArrayList<>();
-        for(Map.Entry<String,String> i : identityProviders.entrySet()) {
-            String metaURI = i.getValue();
-
+        for( String metaURI : identityProviders) {
             MetadataProvider metadataProvider = getMetadataProvider(metaURI);
             ExtendedMetadataDelegate extendedMetadataDelegate = new ExtendedMetadataDelegate(metadataProvider, extendedMetadata());
             extendedMetadataDelegate.setMetadataTrustCheck(true);
@@ -162,7 +158,7 @@ public class SamlWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapt
         return new CachingMetadataManager(providers);
     }
 
-    private MetadataProvider getMetadataProvider(String metaURI) throws ResourceException, MetadataProviderException {
+    public MetadataProvider getMetadataProvider(String metaURI) throws ResourceException, MetadataProviderException {
         Resource resource = new ClasspathResource(metaURI);
         ResourceBackedMetadataProvider metadataProvider = new ResourceBackedMetadataProvider(new Timer(true), resource);
         metadataProvider.setParserPool(parserPool());
@@ -183,6 +179,7 @@ public class SamlWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapt
     @Bean
     public KeyManager keyManager() {
         return new JKSKeyManager(
+                // TODO: make Keystore configurable.
                 new DefaultResourceLoader().getResource("classpath:/keystore.jks"),
                 "keystore",
                 Collections.singletonMap("samltestkey", "samltest"),
@@ -207,7 +204,6 @@ public class SamlWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapt
 
         SAMLEntryPoint samlEntryPoint = new SAMLEntryPoint();
         samlEntryPoint.setDefaultProfileOptions(webSSOProfileOptions);
-        samlEntryPoint.setFilterProcessesUrl("/saml/login");
         return samlEntryPoint;
     }
 
@@ -239,8 +235,8 @@ public class SamlWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapt
     @Bean
     public MetadataGenerator metadataGenerator() throws Exception {
         MetadataGenerator generator = new MetadataGenerator();
-        generator.setEntityBaseURL("http://localhost:48080");
-        generator.setEntityId("http://localhost:48080/saml/metadata");
+        generator.setEntityBaseURL(samlConfiguration.getEntityBaseUrl());
+        generator.setEntityId(samlConfiguration.getEntityId());
         generator.setExtendedMetadata(extendedMetadata());
         generator.setIncludeDiscoveryExtension(false);
         generator.setKeyManager(keyManager());
@@ -272,7 +268,7 @@ public class SamlWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapt
         filter.setAuthenticationManager(authenticationManager()); // This takes samlAuthenticationProvider via configure below
         filter.setAuthenticationSuccessHandler(successRedirectHandler());
         filter.setAuthenticationFailureHandler(authenticationFailureHandler());
-        filter.setFilterProcessesUrl("/saml/HoKSSO");
+        filter.setFilterProcessesUrl(samlConfiguration.getHokSsoUrl());
         return filter;
     }
 
@@ -286,7 +282,7 @@ public class SamlWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapt
         filter.setAuthenticationManager(authenticationManager()); // This takes samlAuthenticationProvider via configure below
         filter.setAuthenticationSuccessHandler(successRedirectHandler());
         filter.setAuthenticationFailureHandler(authenticationFailureHandler());
-        filter.setFilterProcessesUrl("/saml/SSO");
+        filter.setFilterProcessesUrl(samlConfiguration.getSsoUrl());
         return filter;
     }
 
@@ -296,7 +292,7 @@ public class SamlWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapt
     @Order(0) // ensure auth is checked early in the filter chain
     public SAMLLogoutProcessingFilter samlLogoutProcessingFilter() {
         SAMLLogoutProcessingFilter filter = new SAMLLogoutProcessingFilter(successLogoutHandler(), logoutHandler());
-        filter.setFilterProcessesUrl("/saml/SingleLogout");
+        filter.setFilterProcessesUrl(samlConfiguration.getSingleLogoutUrl());
         return filter;
     }
 
@@ -310,7 +306,7 @@ public class SamlWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapt
     @Bean
     public SimpleUrlLogoutSuccessHandler successLogoutHandler() {
         SimpleUrlLogoutSuccessHandler successLogoutHandler = new SimpleUrlLogoutSuccessHandler();
-        successLogoutHandler.setDefaultTargetUrl("/");
+        successLogoutHandler.setDefaultTargetUrl(samlConfiguration.getLogoutRedirectUrl());
         return successLogoutHandler;
     }
 
@@ -329,7 +325,7 @@ public class SamlWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapt
     @Bean
     public AuthenticationSuccessHandler successRedirectHandler() {
         SavedRequestAwareAuthenticationSuccessHandler successRedirectHandler = new SavedRequestAwareAuthenticationSuccessHandler();
-        successRedirectHandler.setDefaultTargetUrl("/auth-required");
+        successRedirectHandler.setDefaultTargetUrl(samlConfiguration.getLoginRedirectUrl());
         return successRedirectHandler;
     }
 
@@ -343,7 +339,7 @@ public class SamlWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapt
     public SimpleUrlAuthenticationFailureHandler authenticationFailureHandler() {
         SimpleUrlAuthenticationFailureHandler failureHandler = new SimpleUrlAuthenticationFailureHandler();
         failureHandler.setUseForward(true);
-        failureHandler.setDefaultFailureUrl("/my-error");
+        failureHandler.setDefaultFailureUrl(samlConfiguration.getErrorUrl());
         return failureHandler;
     }
 
@@ -354,7 +350,7 @@ public class SamlWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapt
         SAMLLogoutFilter filter = new SAMLLogoutFilter(successLogoutHandler(),
                 new LogoutHandler[]{logoutHandler()},  // local logout (just this app)
                 new LogoutHandler[]{logoutHandler()}); // global logout (trigger for all apps - not supported)
-        filter.setFilterProcessesUrl("/saml/logout");
+        filter.setFilterProcessesUrl(samlConfiguration.getLogoutUrl());
         return filter;
     }
 

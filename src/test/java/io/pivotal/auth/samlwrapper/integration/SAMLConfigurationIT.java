@@ -13,7 +13,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = SamlWrapperApplication.class)
-@WebIntegrationTest("saml.max-auth-age-seconds=70")
+@WebIntegrationTest({"saml.max-auth-age-seconds=70"})
 public class SAMLConfigurationIT {
     @Autowired
     private SAMLConfiguration config;
