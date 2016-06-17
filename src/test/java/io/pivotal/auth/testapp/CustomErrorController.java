@@ -1,4 +1,4 @@
-package io.pivotal.auth.samlwrapper.implementation;
+package io.pivotal.auth.testapp;
 
 import org.springframework.boot.autoconfigure.web.ErrorController;
 import org.springframework.web.bind.annotation.RequestMapping;

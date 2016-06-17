@@ -42,7 +42,7 @@ public class SamlWebSecurityConfigurerAdapterTest {
         assertThat(config.getIdentityProviderUris().length, Matchers.equalTo(1));
         assertThat(config.getAllowUnauthenticatedAccessUrls(), Matchers.arrayContaining("/"));
         assertThat(config.getAllowUnauthenticatedAccessUrls().length, Matchers.equalTo(1));
-
+        assertThat(config.isAuthenticationDisabled(), Matchers.equalTo(false));
 
         SAMLConfiguration.KeyStoreConfig keyStore = config.getKeystore();
 

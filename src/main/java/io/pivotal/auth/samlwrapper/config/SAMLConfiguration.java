@@ -28,6 +28,8 @@ public class SAMLConfiguration {
 
     private String[] allowUnauthenticatedAccessUrls = new String[] {"/"};
 
+    private boolean authenticationDisabled = false;
+
     private KeyStoreConfig keystore = new KeyStoreConfig();
 
     public static class KeyStoreConfig {
@@ -176,5 +178,13 @@ public class SAMLConfiguration {
 
     public void setAllowUnauthenticatedAccessUrls(String[] allowUnauthenticatedAccessUrls) {
         this.allowUnauthenticatedAccessUrls = allowUnauthenticatedAccessUrls;
+    }
+
+    public boolean isAuthenticationDisabled() {
+        return authenticationDisabled;
+    }
+
+    public void setAuthenticationDisabled(boolean authenticationDisabled) {
+        this.authenticationDisabled = authenticationDisabled;
     }
 }

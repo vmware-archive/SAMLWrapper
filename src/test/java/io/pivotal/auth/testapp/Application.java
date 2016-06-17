@@ -1,10 +1,12 @@
-package io.pivotal.auth.samlwrapper.implementation;
+package io.pivotal.auth.testapp;
 
 import io.pivotal.auth.samlwrapper.userannotation.CurrentUser;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Collections;
 
 @RestController
 public class Application {
@@ -31,6 +33,7 @@ public class Application {
 
     @RequestMapping(value = "/auth-required", produces = MediaType.TEXT_HTML_VALUE)
     public String authRequiredPage(@CurrentUser User user) {
+
         return genericPage("Authentication Required to view",
                 "<p class='auth-required'></p>" +
                 "<p class='username-test'>Logged in as " + user.getUsername() + ".</p>"

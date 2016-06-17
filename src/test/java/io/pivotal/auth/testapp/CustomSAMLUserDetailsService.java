@@ -1,4 +1,4 @@
-package io.pivotal.auth.samlwrapper.implementation;
+package io.pivotal.auth.testapp;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

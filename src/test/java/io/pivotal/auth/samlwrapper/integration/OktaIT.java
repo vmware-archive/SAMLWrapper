@@ -1,6 +1,6 @@
 package io.pivotal.auth.samlwrapper.integration;
 
-import io.pivotal.auth.samlwrapper.SamlWrapperApplication;
+import io.pivotal.auth.testapp.SamlWrapperApplication;
 import io.pivotal.auth.samlwrapper.pages.*;
 import org.fluentlenium.adapter.FluentTest;
 import org.fluentlenium.assertj.FluentLeniumAssertions;

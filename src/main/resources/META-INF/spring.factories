@@ -1,0 +1,5 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  io.pivotal.auth.samlwrapper.SamlWebSecurityConfigurerAdapter,\
+  io.pivotal.auth.samlwrapper.config.SAMLConfiguration,\
+  io.pivotal.auth.samlwrapper.userannotation.MvcConfig,\
+  io.pivotal.auth.samlwrapper.userannotation.CurrentUserHandlerMethodArgumentResolver

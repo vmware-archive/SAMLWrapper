@@ -1,7 +1,7 @@
 package io.pivotal.auth.samlwrapper.integration;
 
 import io.pivotal.auth.samlwrapper.SamlWebSecurityConfigurerAdapter;
-import io.pivotal.auth.samlwrapper.SamlWrapperApplication;
+import io.pivotal.auth.testapp.SamlWrapperApplication;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;

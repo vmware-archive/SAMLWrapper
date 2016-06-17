@@ -56,27 +56,33 @@ public class SamlWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapt
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.httpBasic().authenticationEntryPoint(samlEntryPoint());
-        // Disable Cross-Site-Request-Forgery checking for the SSO URLs (since they must accept data sent from the
-        // Identity Provider's domains)
-        http.csrf().ignoringAntMatchers(
-                samlConfiguration.getSsoUrl(),
-                samlConfiguration.getHokSsoUrl(),
-                samlConfiguration.getSingleLogoutUrl()
-        );
+        // For testing allow all pages to be accessed without authentication.
+        if( samlConfiguration.isAuthenticationDisabled() ) {
+            http.authorizeRequests().anyRequest().permitAll();
+        } else {
+            http.httpBasic().authenticationEntryPoint(samlEntryPoint());
 
-        for(String url :samlConfiguration.getAllowUnauthenticatedAccessUrls()){
-            http.authorizeRequests().antMatchers(url).permitAll();
+            // Disable Cross-Site-Request-Forgery checking for the SSO URLs (since they must accept data sent from the
+            // Identity Provider's domains)
+            http.csrf().ignoringAntMatchers(
+                    samlConfiguration.getSsoUrl(),
+                    samlConfiguration.getHokSsoUrl(),
+                    samlConfiguration.getSingleLogoutUrl()
+            );
+
+            for (String url : samlConfiguration.getAllowUnauthenticatedAccessUrls()) {
+                http.authorizeRequests().antMatchers(url).permitAll();
+            }
+
+            // ...and the URLs necessary for SSO
+            http.authorizeRequests()
+                    .antMatchers(samlConfiguration.getErrorUrl()).permitAll()
+                    .antMatchers(samlConfiguration.getLogoutUrl()).permitAll()
+                    .antMatchers(samlConfiguration.getSingleLogoutUrl()).permitAll()
+                    .antMatchers(samlConfiguration.getSsoUrl()).permitAll()
+                    .antMatchers(samlConfiguration.getHokSsoUrl()).permitAll()
+                    .anyRequest().authenticated();
         }
-
-        // ...and the URLs necessary for SSO
-        http.authorizeRequests()
-                .antMatchers(samlConfiguration.getErrorUrl()).permitAll()
-                .antMatchers(samlConfiguration.getLogoutUrl()).permitAll()
-                .antMatchers(samlConfiguration.getSingleLogoutUrl()).permitAll()
-                .antMatchers(samlConfiguration.getSsoUrl()).permitAll()
-                .antMatchers(samlConfiguration.getHokSsoUrl()).permitAll()
-                .anyRequest().authenticated();
 
     }
 

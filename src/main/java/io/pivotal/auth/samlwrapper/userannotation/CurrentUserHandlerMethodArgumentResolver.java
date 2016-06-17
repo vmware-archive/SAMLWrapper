@@ -27,6 +27,7 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
 import java.security.Principal;
+import java.util.Collections;
 
 @Component
 public class CurrentUserHandlerMethodArgumentResolver implements HandlerMethodArgumentResolver {
@@ -45,10 +46,17 @@ public class CurrentUserHandlerMethodArgumentResolver implements HandlerMethodAr
 			return WebArgumentResolver.UNRESOLVED;
 		}
 		Principal principal = webRequest.getUserPrincipal();
+
+		if(principal == null){
+			return new User("Unauthenticated", "", Collections.emptyList());
+		}
+
 		Object user = ((Authentication) principal).getPrincipal();
+
 		if(user instanceof User) { // also prevents null return
 			return user;
 		}
+
 		return WebArgumentResolver.UNRESOLVED;
 	}
 }

@@ -35,6 +35,7 @@
 		<dependency>
 			<groupId>org.springframework.security.extensions</groupId>
 			<artifactId>spring-security-saml2-core</artifactId>
+			<version>1.0.1.RELEASE</version>
 		</dependency>
 		
 		<dependency>
@@ -62,14 +63,4 @@
 		</dependency>
 	</dependencies>
 	
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-			</plugin>
-		</plugins>
-	</build>
-	
-
 </project>
