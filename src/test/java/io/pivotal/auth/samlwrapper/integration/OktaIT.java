@@ -5,7 +5,6 @@ import io.pivotal.auth.samlwrapper.pages.*;
 import org.fluentlenium.adapter.FluentTest;
 import org.fluentlenium.assertj.FluentLeniumAssertions;
 import org.hamcrest.Matchers;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -139,12 +138,6 @@ public class OktaIT extends FluentTest {
 	public void testUsernameAppearsOnLogin() throws Exception {
 		loginFromApp();
 		assertThat(authRequiredPage.getUsernameTest(), Matchers.equalTo("Logged in as " + TEST_USERNAME + "."));
-	}
-
-	@After
-	public void showDebugInformation() { // TODO: temporary debugging
-		System.out.println("final URL: " + url());
-		System.out.println("source:\n" + pageSource());
 	}
 
 }

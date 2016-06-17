@@ -4,6 +4,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Component
 @EnableConfigurationProperties
 @ConfigurationProperties(prefix = "saml")
@@ -23,6 +26,53 @@ public class SAMLConfiguration {
 
     private String[] IdentityProviderUris = new String[]{"/okta.xml"};
 
+    private String[] allowUnauthenticatedAccessUrls = new String[] {"/"};
+
+    private KeyStoreConfig keystore = new KeyStoreConfig();
+
+    public static class KeyStoreConfig {
+        private String keyStoreUri = "classpath:/keystoreIT.jks";
+        private String keyStorePassword = "keystore";
+        private Map<String,String> passwordMap = new HashMap<>();
+        private String defaultKey = "samltestkey";
+
+        public KeyStoreConfig() {
+            passwordMap.put("samltestkey","samltest");
+        }
+
+        public String getKeyStoreUri() {
+            return keyStoreUri;
+        }
+
+        public void setKeyStoreUri(String keyStoreUri) {
+            this.keyStoreUri = keyStoreUri;
+        }
+
+        public String getKeyStorePassword() {
+            return keyStorePassword;
+        }
+
+        public void setKeyStorePassword(String keyStorePassword) {
+            this.keyStorePassword = keyStorePassword;
+        }
+
+        public Map<String, String> getPasswordMap() {
+            return passwordMap;
+        }
+
+        public void setPasswordMap(Map<String, String> passwordMap) {
+            this.passwordMap = passwordMap;
+        }
+
+        public String getDefaultKey() {
+            return defaultKey;
+        }
+
+        public void setDefaultKey(String defaultKey) {
+            this.defaultKey = defaultKey;
+        }
+
+    }
 
     public long getMaxAuthAgeSeconds() {
         return maxAuthAgeSeconds;
@@ -110,5 +160,21 @@ public class SAMLConfiguration {
 
     public void setIdentityProviderUris(String[] identityProviderUris) {
         IdentityProviderUris = identityProviderUris;
+    }
+
+    public KeyStoreConfig getKeystore() {
+        return keystore;
+    }
+
+    public void setKeystore(KeyStoreConfig keystore) {
+        this.keystore = keystore;
+    }
+
+    public String[] getAllowUnauthenticatedAccessUrls() {
+        return allowUnauthenticatedAccessUrls;
+    }
+
+    public void setAllowUnauthenticatedAccessUrls(String[] allowUnauthenticatedAccessUrls) {
+        this.allowUnauthenticatedAccessUrls = allowUnauthenticatedAccessUrls;
     }
 }

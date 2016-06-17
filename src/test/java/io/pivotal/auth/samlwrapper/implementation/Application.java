@@ -37,4 +37,18 @@ public class Application {
         );
     }
 
+    @RequestMapping(value = "/unauth1", produces = MediaType.TEXT_HTML_VALUE)
+    public String unauth1() {
+        return genericPage("Public Page - Unauth1",
+                "<p class='unauth1-page'></p>"
+        );
+    }
+
+    @RequestMapping(value = "/unauth2", produces = MediaType.TEXT_HTML_VALUE)
+    public String unauth2() {
+        return genericPage("Public Page - Unauth2",
+                "<p class='unauth2-page'></p>"
+        );
+    }
+
 }

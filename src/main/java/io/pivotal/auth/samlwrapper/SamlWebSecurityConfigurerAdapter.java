@@ -65,6 +65,10 @@ public class SamlWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapt
                 samlConfiguration.getSingleLogoutUrl()
         );
 
+        for(String url :samlConfiguration.getAllowUnauthenticatedAccessUrls()){
+            http.authorizeRequests().antMatchers(url).permitAll();
+        }
+
         // ...and the URLs necessary for SSO
         http.authorizeRequests()
                 .antMatchers(samlConfiguration.getErrorUrl()).permitAll()
@@ -72,7 +76,6 @@ public class SamlWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapt
                 .antMatchers(samlConfiguration.getSingleLogoutUrl()).permitAll()
                 .antMatchers(samlConfiguration.getSsoUrl()).permitAll()
                 .antMatchers(samlConfiguration.getHokSsoUrl()).permitAll()
-                .antMatchers("/").permitAll()
                 .anyRequest().authenticated();
 
     }
@@ -136,7 +139,7 @@ public class SamlWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapt
 
     // This is used during OpenSAML parsing; it is provided explicitly in several places and consumed implicitly by
     // some internal parts of the library (so must be a bean). It provides an XML parser pool.
-    @Bean(initMethod = "initialize") // todo: possibly removable
+    @Bean(initMethod = "initialize") // TODO: possibly removable
     public StaticBasicParserPool parserPool() {
         return new StaticBasicParserPool();
     }
@@ -175,15 +178,17 @@ public class SamlWebSecurityConfigurerAdapter extends WebSecurityConfigurerAdapt
 
     // This is our app key manager. It holds the key for signing SAML messages for security. It is important that the
     // keystore (samlKeystore.jks in this example) is unique to the app. New keystores can be generated using:
-    //  keytool -genkey -keyalg RSA -alias selfsigned -keystore keystore.jks -storepass changeit -validity 360 -keysize 2048
+    //  keytool -genkey -keyalg RSA -alias selfsigned -keystore keystoreIT.jks -storepass changeit -validity 360 -keysize 2048
     @Bean
     public KeyManager keyManager() {
+
+        SAMLConfiguration.KeyStoreConfig keyStoreConfig = samlConfiguration.getKeystore();
+
         return new JKSKeyManager(
-                // TODO: make Keystore configurable.
-                new DefaultResourceLoader().getResource("classpath:/keystore.jks"),
-                "keystore",
-                Collections.singletonMap("samltestkey", "samltest"),
-                "samltestkey");
+                new DefaultResourceLoader().getResource(keyStoreConfig.getKeyStoreUri()),
+                keyStoreConfig.getKeyStorePassword(),
+                keyStoreConfig.getPasswordMap(),
+                keyStoreConfig.getDefaultKey());
     }
 
     // This filter/endpoint handles triggering a login request. It is explicitly provided to the authentication system,

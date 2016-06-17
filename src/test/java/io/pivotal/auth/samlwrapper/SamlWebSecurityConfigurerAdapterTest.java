@@ -9,12 +9,16 @@ import org.springframework.security.saml.SAMLLogoutFilter;
 import org.springframework.security.saml.SAMLLogoutProcessingFilter;
 import org.springframework.security.saml.SAMLProcessingFilter;
 import org.springframework.security.saml.SAMLWebSSOHoKProcessingFilter;
+import org.springframework.security.saml.key.KeyManager;
 import org.springframework.security.saml.metadata.MetadataManager;
 import org.springframework.security.saml.websso.WebSSOProfileConsumerImpl;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 import org.springframework.security.web.authentication.logout.SimpleUrlLogoutSuccessHandler;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -34,11 +38,21 @@ public class SamlWebSecurityConfigurerAdapterTest {
         assertThat(config.getLoginRedirectUrl(), Matchers.equalTo("/"));
         assertThat(config.getEntityBaseUrl(), Matchers.equalTo("http://localhost:48080"));
         assertThat(config.getEntityId(), Matchers.equalTo("http://localhost:48080/saml/metadata"));
-      //  assertThat(config.getIdentityProviderUris(), Matchers.contains("/okta.xml"));
-        //assertThat(config.getIdentityProviderUris().size(), Matchers.equalTo(1));
-    }
+        assertThat(config.getIdentityProviderUris(), Matchers.arrayContaining("/okta.xml"));
+        assertThat(config.getIdentityProviderUris().length, Matchers.equalTo(1));
+        assertThat(config.getAllowUnauthenticatedAccessUrls(), Matchers.arrayContaining("/"));
+        assertThat(config.getAllowUnauthenticatedAccessUrls().length, Matchers.equalTo(1));
 
-    // TODO: Test configure(HttpSecurity http) method gets values from configuration.
+
+        SAMLConfiguration.KeyStoreConfig keyStore = config.getKeystore();
+
+        assertThat(keyStore.getKeyStoreUri(), Matchers.equalTo("classpath:/keystoreIT.jks"));
+        assertThat(keyStore.getKeyStorePassword(), Matchers.equalTo("keystore"));
+        assertThat(keyStore.getPasswordMap(), Matchers.hasEntry("samltestkey", "samltest"));
+        assertThat(keyStore.getPasswordMap().size(), Matchers.equalTo(1));
+        assertThat(keyStore.getDefaultKey(), Matchers.equalTo("samltestkey"));
+
+    }
 
     @Test
     public void testMaxAuthenticationAgeConfigurable() throws Exception {
@@ -174,5 +188,34 @@ public class SamlWebSecurityConfigurerAdapterTest {
         Mockito.verify(spiedAdapter).getMetadataProvider("/test/provider.xml");
 
     }
+
+    @Test
+    public void testKeyStoreConfigurable() throws Exception {
+        SAMLConfiguration.KeyStoreConfig keyStoreConfig = new SAMLConfiguration.KeyStoreConfig();
+        keyStoreConfig.setKeyStoreUri("classpath:/keystoreTest.jks");
+        keyStoreConfig.setKeyStorePassword("password");
+        Map<String, String> passwordMap = new HashMap<>();
+        passwordMap.put("testkey1", "password1");
+        passwordMap.put("testkey2", "password2");
+        keyStoreConfig.setPasswordMap(passwordMap);
+        keyStoreConfig.setDefaultKey("testkey1");
+        SAMLConfiguration config = new SAMLConfiguration();
+        config.setKeystore(keyStoreConfig);
+
+        SamlWebSecurityConfigurerAdapter adapter = new SamlWebSecurityConfigurerAdapter();
+        ReflectionTestUtils.setField(adapter, "samlConfiguration", config);
+
+        KeyManager keyManager = adapter.keyManager();
+        /**
+         * We are implicitly testing that our KeyStoreUri and password are correct as the correct keys are
+         * contained in this store.
+         * We cannot test retrieving passwords as these are encrypted.
+         */
+        assertThat(keyManager.getDefaultCredential().getEntityId(), Matchers.equalTo("testkey1"));
+        assertThat(keyManager.getAvailableCredentials(), Matchers.containsInAnyOrder("testkey1", "testkey2"));
+        assertThat(keyManager.getAvailableCredentials().size(), Matchers.equalTo(2));
+
+    }
+
 
 }
